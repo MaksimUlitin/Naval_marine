@@ -1,60 +1,157 @@
 import random
 
-# Игровые параметры
+# Определение размера игрового поля и размеров кораблей
 FIELD_SIZE = 10
-SHIPS = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]  # Размеры кораблей
+SHIPS = [4, 3, 3, 2, 2, 2, 1, 1, 1,
+         1]  # Размеры кораблей: один 4-клеточный, два 3-клеточных, три 2-клеточных и четыре 1-клеточных
+
 
 def create_empty_field():
-    """Создание пустого поля 10x10."""
+    """
+    Создает пустое игровое поле размером FIELD_SIZE x FIELD_SIZE,
+    заполненное символами '.' (пустые клетки).
+
+    Returns:
+        list: Двумерный список (поле) с пустыми клетками.
+    """
     return [['.' for _ in range(FIELD_SIZE)] for _ in range(FIELD_SIZE)]
 
+
 def print_field(field):
-    """Отображение игрового поля."""
+    """
+    Печатает текущее состояние игрового поля в консоль.
+
+    Args:
+        field (list): Двумерный список, представляющий игровое поле.
+    """
     for row in field:
-        print(' '.join(row))
-    print()
+        print(' '.join(row))  # Соединяет элементы строки пробелами и печатает
+    print()  # Печатает пустую строку для разделения
+
+
+def is_valid_position(field, row, col, size, orientation):
+    """
+    Проверяет, можно ли разместить корабль заданного размера
+    в указанной позиции на поле.
+
+    Args:
+        field (list): Двумерный список, представляющий игровое поле.
+        row (int): Начальная строка для размещения.
+        col (int): Начальный столбец для размещения.
+        size (int): Размер корабля.
+        orientation (str): Ориентация корабля ('h' - горизонтально, 'v' - вертикально).
+
+    Returns:
+        bool: True, если позиция допустима, иначе False.
+    """
+    # Проверка границ поля и интервала в 1 клетку вокруг корабля
+    for i in range(-1, size + 1):  # Проверка на размер + 1 для учета интервала
+        for j in range(-1, 2):  # Проверка на соседние клетки
+            if orientation == 'h':
+                r, c = row + j, col + i  # Определение позиции для горизонтального размещения
+            else:
+                r, c = row + i, col + j  # Определение позиции для вертикального размещения
+            # Проверка, находится ли клетка в пределах поля и не занята ли она
+            if 0 <= r < FIELD_SIZE and 0 <= c < FIELD_SIZE:
+                if field[r][c] != '.':
+                    return False  # Клетка занята, позиция недопустима
+    return True  # Все проверки пройдены, позиция допустима
+
 
 def place_ship(field, ship_size):
-    """Расстановка корабля на поле случайным образом."""
+    """
+    Размещает корабль заданного размера на поле,
+    выбирая случайную позицию и ориентацию.
+
+    Args:
+        field (list): Двумерный список, представляющий игровое поле.
+        ship_size (int): Размер корабля, который необходимо разместить.
+    """
     while True:
-        orientation = random.choice(['h', 'v'])  # Горизонтальная или вертикальная ориентация
-        if orientation == 'h':  # Горизонтально
+        # Случайный выбор ориентации корабля (горизонтальная или вертикальная)
+        orientation = random.choice(['h', 'v'])
+        if orientation == 'h':
+            # Генерация случайной строки и столбца для горизонтального размещения
             row = random.randint(0, FIELD_SIZE - 1)
             col = random.randint(0, FIELD_SIZE - ship_size)
-            if all(field[row][col + i] == '.' for i in range(ship_size)):
-                for i in range(ship_size):
-                    field[row][col + i] = 'S'
-                break
-        else:  # Вертикально
+        else:
+            # Генерация случайной строки и столбца для вертикального размещения
             row = random.randint(0, FIELD_SIZE - ship_size)
             col = random.randint(0, FIELD_SIZE - 1)
-            if all(field[row + i][col] == '.' for i in range(ship_size)):
-                for i in range(ship_size):
-                    field[row + i][col] = 'S'
-                break
+
+        # Проверка, можно ли разместить корабль
+        if is_valid_position(field, row, col, ship_size, orientation):
+            # Размещение корабля на поле
+            for i in range(ship_size):
+                if orientation == 'h':
+                    field[row][col + i] = 'S'  # 'S' - символ, обозначающий часть корабля
+                else:
+                    field[row + i][col] = 'S'  # 'S' - символ, обозначающий часть корабля
+            break  # Выход из цикла, если корабль успешно размещен
+
 
 def setup_field():
-    """Создание поля с расставленными кораблями."""
-    field = create_empty_field()
-    for ship_size in SHIPS:
-        place_ship(field, ship_size)
-    return field
+    """
+    Создает игровое поле и размещает все корабли на нем.
+
+    Returns:
+        list: Двумерный список, представляющий заполненное игровое поле.
+    """
+    field = create_empty_field()  # Создание пустого поля
+    for ship_size in SHIPS:  # Перебор всех размеров кораблей
+        place_ship(field, ship_size)  # Размещение каждого корабля на поле
+    return field  # Возврат заполненного поля
+
+
+def is_ship_destroyed(field, row, col):
+    """
+    Проверяет, уничтожен ли корабль по указанным координатам.
+
+    Args:
+        field (list): Двумерный список, представляющий игровое поле.
+        row (int): Строка, где был сделан выстрел.
+        col (int): Столбец, где был сделан выстрел.
+
+    Returns:
+        bool: True, если корабль уничтожен, иначе False.
+    """
+    # Направления для проверки соседних клеток (верх, низ, влево, вправо)
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    for dr, dc in directions:
+        r, c = row + dr, col + dc  # Определение соседних клеток
+        # Проверка, находится ли соседняя клетка в пределах поля
+        if 0 <= r < FIELD_SIZE and 0 <= c < FIELD_SIZE:
+            if field[r][c] == 'S':  # Если найдена неповрежденная часть корабля
+                return False  # Корабль не уничтожен
+    return True  # Все части корабля уничтожены
+
 
 def handle_shot(field, row, col, shot_history):
     """
-    Обработка выстрела по координатам.
-    Возвращает результат выстрела и обновляет поле.
+    Обрабатывает выстрел по указанным координатам.
+
+    Args:
+        field (list): Двумерный список, представляющий игровое поле противника.
+        row (int): Строка, где был сделан выстрел.
+        col (int): Столбец, где был сделан выстрел.
+        shot_history (set): Множество, хранящее историю выстрелов.
+
+    Returns:
+        tuple: Сообщение о результате выстрела, статус попадания и информация о том, уничтожен ли корабль.
     """
-    if (row, col) in shot_history:
-        return 'Уже стреляли сюда!', False  # Повторный выстрел
+    if (row, col) in shot_history:  # Проверка, был ли выстрел в эту точку ранее
+        return 'Уже стреляли сюда!', False, False
 
-    shot_history.add((row, col))  # Добавляем координаты в историю выстрелов
+    shot_history.add((row, col))  # Добавление координат выстрела в историю
 
-    if field[row][col] == 'S':
-        field[row][col] = 'X'  # Попадание
-        return 'Попадание!', True
-    elif field[row][col] == '.':
-        field[row][col] = 'O'  # Промах
-        return 'Промах!', False
+    if field[row][col] == 'S':  # Если выстрел попал в корабль
+        field[row][col] = 'X'  # Обозначаем попадание
+        ship_destroyed = is_ship_destroyed(field, row, col)  # Проверка на уничтожение корабля
+        return 'Попадание!', True, ship_destroyed  # Возвращаем результат попадания
+    elif field[row][col] == '.':  # Если выстрел попал в пустую клетку
+        field[row][col] = 'O'  # Обозначаем промах
+        return 'Промах!', False, False  # Возвращаем результат промаха
 
-    return 'Уже стреляли сюда!', False
+    return 'Уже стреляли сюда!', False, False  # Возврат в случае, если выстрел уже был
+
+# Конец кода
