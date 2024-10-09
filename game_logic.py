@@ -1,60 +1,81 @@
 import random
 
-# Игровые параметры
 FIELD_SIZE = 10
 SHIPS = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]  # Размеры кораблей
 
+
 def create_empty_field():
-    """Создание пустого поля 10x10."""
     return [['.' for _ in range(FIELD_SIZE)] for _ in range(FIELD_SIZE)]
 
+
 def print_field(field):
-    """Отображение игрового поля."""
     for row in field:
         print(' '.join(row))
     print()
 
+
+def is_valid_position(field, row, col, size, orientation):
+    # Проверка границ поля и интервала в 1 клетку вокруг корабля
+    for i in range(-1, size + 1):
+        for j in range(-1, 2):
+            if orientation == 'h':
+                r, c = row + j, col + i
+            else:
+                r, c = row + i, col + j
+            if 0 <= r < FIELD_SIZE and 0 <= c < FIELD_SIZE:
+                if field[r][c] != '.':
+                    return False
+    return True
+
+
 def place_ship(field, ship_size):
-    """Расстановка корабля на поле случайным образом."""
     while True:
-        orientation = random.choice(['h', 'v'])  # Горизонтальная или вертикальная ориентация
-        if orientation == 'h':  # Горизонтально
+        orientation = random.choice(['h', 'v'])
+        if orientation == 'h':
             row = random.randint(0, FIELD_SIZE - 1)
             col = random.randint(0, FIELD_SIZE - ship_size)
-            if all(field[row][col + i] == '.' for i in range(ship_size)):
-                for i in range(ship_size):
-                    field[row][col + i] = 'S'
-                break
-        else:  # Вертикально
+        else:
             row = random.randint(0, FIELD_SIZE - ship_size)
             col = random.randint(0, FIELD_SIZE - 1)
-            if all(field[row + i][col] == '.' for i in range(ship_size)):
-                for i in range(ship_size):
+
+        if is_valid_position(field, row, col, ship_size, orientation):
+            for i in range(ship_size):
+                if orientation == 'h':
+                    field[row][col + i] = 'S'
+                else:
                     field[row + i][col] = 'S'
-                break
+            break
+
 
 def setup_field():
-    """Создание поля с расставленными кораблями."""
     field = create_empty_field()
     for ship_size in SHIPS:
         place_ship(field, ship_size)
     return field
 
-def handle_shot(field, row, col, shot_history):
-    """
-    Обработка выстрела по координатам.
-    Возвращает результат выстрела и обновляет поле.
-    """
-    if (row, col) in shot_history:
-        return 'Уже стреляли сюда!', False  # Повторный выстрел
 
-    shot_history.add((row, col))  # Добавляем координаты в историю выстрелов
+def is_ship_destroyed(field, row, col):
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    for dr, dc in directions:
+        r, c = row + dr, col + dc
+        if 0 <= r < FIELD_SIZE and 0 <= c < FIELD_SIZE:
+            if field[r][c] == 'S':
+                return False  # Найдена неповрежденная часть корабля
+    return True  # Все части корабля уничтожены
+
+
+def handle_shot(field, row, col, shot_history):
+    if (row, col) in shot_history:
+        return 'Уже стреляли сюда!', False, False
+
+    shot_history.add((row, col))
 
     if field[row][col] == 'S':
-        field[row][col] = 'X'  # Попадание
-        return 'Попадание!', True
+        field[row][col] = 'X'
+        ship_destroyed = is_ship_destroyed(field, row, col)
+        return 'Попадание!', True, ship_destroyed
     elif field[row][col] == '.':
-        field[row][col] = 'O'  # Промах
-        return 'Промах!', False
+        field[row][col] = 'O'
+        return 'Промах!', False, False
 
-    return 'Уже стреляли сюда!', False
+    return 'Уже стреляли сюда!', False, False
