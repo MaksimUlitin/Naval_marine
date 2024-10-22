@@ -3,7 +3,6 @@ import random
 FIELD_SIZE = 10
 SHIPS = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]  # Размеры кораблей
 
-
 def create_empty_field():
     return [['.' for _ in range(FIELD_SIZE)] for _ in range(FIELD_SIZE)]
 
