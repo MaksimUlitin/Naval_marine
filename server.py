@@ -1,6 +1,6 @@
 import socket
 import threading
-from Naval_marine.game_logic import setup_field, handle_shot, print_field
+from game_logic import setup_field, handle_shot, print_field
 
 fields = {}
 shot_histories = [set(), set()]
