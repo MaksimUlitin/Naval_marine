@@ -14,9 +14,7 @@ def print_fields():
 
 def handle_client(client_socket, player_number):
     global current_turn
-
-    field = fields[player_number]
-    client_socket.sendall("START".encode('utf-8'))
+    opponent_number = 1 - player_number
 
     while True:
         if current_turn == player_number:
@@ -26,8 +24,8 @@ def handle_client(client_socket, player_number):
                     break
 
                 row, col = map(int, shot.split())
-                result, hit, ship_destroyed = handle_shot(fields[1 - player_number], row, col,
-                                                          shot_histories[1 - player_number])
+                result, hit, ship_destroyed = handle_shot(fields[opponent_number], row, col,
+                                                          shot_histories[opponent_number])
 
                 if ship_destroyed:
                     result += " Корабль уничтожен!"
@@ -37,14 +35,14 @@ def handle_client(client_socket, player_number):
                 print_fields()
 
                 if not hit:
-                    current_turn = 1 - current_turn
+                    current_turn = opponent_number
                     print(f"Сейчас ход игрока {current_turn + 1}")
             except (ValueError, IndexError):
                 client_socket.send("Некорректный ввод! Введите два числа (0-9).".encode('utf-8'))
 
 def start_server():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('0.0.0.0', 8882))
+    server.bind(('0.0.0.0', 8882))  
     server.listen(2)
     print("Ожидание подключения игроков...")
 
