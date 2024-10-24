@@ -1,21 +1,34 @@
 import socket
 from game_logic import print_field
 
-class GameClient:
-    def __init__(self, server_ip, server_port): # конструктор класса GameClient
-        """
-        Инициализация клиента игры.
+import socket
+from game_logic import print_field
 
-        :param server_ip: IP-адрес сервера
-        :param server_port: Порт сервера
-        """
+class GameClient:
+    def __init__(self, server_ip, server_port):
         self.server_ip = server_ip
         self.server_port = server_port
         self.client_socket = None
         self.player_board = [['.' for _ in range(10)] for _ in range(10)]
         self.enemy_board = [['.' for _ in range(10)] for _ in range(10)]
         self.con_serv()
+        self.receive_initial_board()  # Добавляем получение начального состояния поля
 
+    def receive_initial_board(self):
+        """
+        Получает начальное расположение кораблей от сервера
+        """
+        try:
+            data = self.client_socket.recv(1024).decode()
+            if data.startswith("INIT "):
+                field_str = data[5:]  # Пропускаем префикс "INIT "
+                rows = field_str.split('\n')
+                for i in range(10):
+                    for j in range(10):
+                        self.player_board[i][j] = rows[i][j]
+                print("Получено начальное расположение кораблей")
+        except socket.error as err:
+            print(f"Ошибка при получении начального поля: {err}")
     def con_serv(self):
         """
         Устанавливает соединение с сервером.

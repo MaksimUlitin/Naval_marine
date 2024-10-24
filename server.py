@@ -6,15 +6,21 @@ fields = {}
 shot_histories = [set(), set()]
 current_turn = 0
 
+
 def print_fields():
     print("Поле игрока 1:")
     print_field(fields[0])
     print("Поле игрока 2:")
     print_field(fields[1])
 
+
 def handle_client(client_socket, player_number):
     global current_turn
     opponent_number = 1 - player_number
+
+    # Отправляем клиенту его поле сразу после подключения
+    field_str = '\n'.join([''.join(row) for row in fields[player_number]])
+    client_socket.send(f"INIT {field_str}".encode('utf-8'))
 
     while True:
         if current_turn == player_number:
@@ -40,9 +46,10 @@ def handle_client(client_socket, player_number):
             except (ValueError, IndexError):
                 client_socket.send("Некорректный ввод! Введите два числа (0-9).".encode('utf-8'))
 
+
 def start_server():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('0.0.0.0', 8882))  
+    server.bind(('0.0.0.0', 8881))
     server.listen(2)
     print("Ожидание подключения игроков...")
 
@@ -53,6 +60,7 @@ def start_server():
 
         client_handler = threading.Thread(target=handle_client, args=(client_socket, i))
         client_handler.start()
+
 
 if __name__ == "__main__":
     start_server()
